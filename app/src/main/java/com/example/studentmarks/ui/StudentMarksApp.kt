@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +50,18 @@ fun StudentMarksApp(
     reportsViewModel: ReportsViewModel,
 ) {
     val context = LocalContext.current
+    val preferences = remember(context) { context.getSharedPreferences("student_marks_preferences", 0) }
+    var isDarkTheme by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_theme", false)) }
+    var showAboutApp by rememberSaveable { mutableStateOf(false) }
+    val appVersion = remember(context) {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+            .getOrNull()
+            ?: "Unknown"
+    }
+    val toggleTheme = {
+        isDarkTheme = !isDarkTheme
+        preferences.edit().putBoolean("dark_theme", isDarkTheme).apply()
+    }
     val appState by viewModel.appState.collectAsStateWithLifecycle()
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val studentsState by studentsViewModel.screenState.collectAsStateWithLifecycle()
@@ -112,7 +125,7 @@ fun StudentMarksApp(
         }
     }
 
-    StudentMarksTheme {
+    StudentMarksTheme(darkTheme = isDarkTheme) {
         Surface(modifier = Modifier.fillMaxSize()) {
             when (val state = appState) {
                 AppUiState.Loading -> MessageScreen("Loading your class...")
@@ -258,6 +271,9 @@ fun StudentMarksApp(
                         activeAssessmentCount = activeAssessmentCount,
                         selectedTerm = selectedTerm,
                         workSummary = dashboardWorkSummary,
+                        isDarkTheme = isDarkTheme,
+                        onToggleTheme = toggleTheme,
+                        onAboutApp = { showAboutApp = true },
                         onShowClasses = viewModel::showProfileSelector,
                         onEdit = { viewModel.editProfile(state.profile.id, returnToSelector = false) },
                         onOpenStudents = { studentsViewModel.openStudents(state.profile) },
@@ -292,6 +308,20 @@ fun StudentMarksApp(
                 )
                 is AppUiState.Error -> MessageScreen(state.message)
             }
+        }
+        if (showAboutApp) {
+            AlertDialog(
+                onDismissRequest = { showAboutApp = false },
+                title = { Text("About Student Marks") },
+                text = {
+                    Text("Student Marks Management System\nVersion $appVersion\n\nManage class profiles, student marks, reports, and Excel exports.")
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = { showAboutApp = false }) {
+                        Text("Close")
+                    }
+                },
+            )
         }
     }
 }

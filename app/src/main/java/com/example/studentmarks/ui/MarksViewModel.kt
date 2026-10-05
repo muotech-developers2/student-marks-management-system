@@ -45,6 +45,7 @@ class MarksViewModel(
                 availableTerms = terms,
                 availableAssessments = availableAssessments,
                 availableSubjects = activeSubjects,
+                isLoading = selectedAssessment != null && selectedSubject != null,
             )
             screenFlow.value = MarksScreenState.Entry(nextState)
             refreshRows(nextState)
@@ -71,7 +72,7 @@ class MarksViewModel(
                 validationError = null,
                 errorMessage = null,
                 studentRows = emptyList(),
-                isLoading = true,
+                isLoading = selectedAssessment != null && selectedSubject != null,
             )
             screenFlow.value = MarksScreenState.Entry(updated)
             profileRepository.updateCurrentTerm(profile.id, termNumber)
@@ -130,11 +131,13 @@ class MarksViewModel(
 
     fun saveMarks() {
         val state = (screenState as? MarksScreenState.Entry)?.state ?: return
+        if (state.isSaving || state.studentRows.isEmpty()) return
         val profile = state.profile ?: return
         val term = state.selectedTerm ?: return
         val assessment = state.selectedAssessment ?: return
         val subject = state.selectedSubject ?: return
         val rows = state.studentRows
+        screenFlow.value = MarksScreenState.Entry(state.copy(isSaving = true))
 
         viewModelScope.launch {
             try {
@@ -197,8 +200,19 @@ class MarksViewModel(
     private fun refreshRows(baseState: MarksUiState) {
         val profile = baseState.profile ?: return
         val term = baseState.selectedTerm ?: return
-        val assessment = baseState.selectedAssessment ?: return
-        val subject = baseState.selectedSubject ?: return
+        val assessment = baseState.selectedAssessment
+        val subject = baseState.selectedSubject
+        if (assessment == null || subject == null) {
+            screenFlow.value = MarksScreenState.Entry(
+                baseState.copy(
+                    studentRows = emptyList(),
+                    completedCount = 0,
+                    totalCount = 0,
+                    isLoading = false,
+                ),
+            )
+            return
+        }
         viewModelScope.launch {
             try {
                 val students = studentRepository.getStudentsForProfile(profile.id).filter { it.isActive }

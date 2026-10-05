@@ -4,16 +4,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -91,7 +102,7 @@ private fun MarksEntryScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Marks", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Back") }
+            BackIconButton(onClick = onBack)
         }
 
         if (state.profile != null) {
@@ -158,6 +169,13 @@ private fun MarksEntryScreen(
             )
         }
 
+        when {
+            state.availableAssessments.isEmpty() -> Text("No assessments for this term. Add an assessment before entering marks.")
+            state.availableSubjects.isEmpty() -> Text("No active subjects yet. Add a subject before entering marks.")
+            !state.isLoading && state.totalCount == 0 -> Text("No active students yet. Add students before entering marks.")
+            !state.isLoading && state.studentRows.isEmpty() -> Text("No students match your search.")
+        }
+
         Text("Marks entered: ${state.completedCount} / ${state.totalCount}")
 
         OutlinedTextField(
@@ -166,6 +184,7 @@ private fun MarksEntryScreen(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Search student") },
             singleLine = true,
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
 
@@ -179,34 +198,62 @@ private fun MarksEntryScreen(
         if (state.isLoading) {
             Text("Loading marks...")
         } else {
-            LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Student", modifier = Modifier.weight(1.15f), style = MaterialTheme.typography.labelLarge)
+                Text("Mark", modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
+                Text("Action", modifier = Modifier.width(48.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(state.studentRows, key = { it.student.id }) { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(row.student.name, modifier = Modifier.weight(1f))
-                        OutlinedTextField(
-                            value = row.value,
-                            onValueChange = { onMarkChanged(row.student.id, it) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            placeholder = { Text("—") },
-                        )
-                        if (row.existingValue != null || row.value.isNotBlank()) {
-                            TextButton(onClick = { onClearMark(row.student.id) }) {
-                                Text("Clear")
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                row.student.name,
+                                modifier = Modifier.weight(1.15f),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            OutlinedTextField(
+                                value = row.value,
+                                onValueChange = { onMarkChanged(row.student.id, it) },
+                                modifier = Modifier.weight(0.8f),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                placeholder = { Text("—") },
+                            )
+                            if (row.existingValue != null || row.value.isNotBlank()) {
+                                IconButton(onClick = { onClearMark(row.student.id) }) {
+                                    Icon(Icons.Filled.Close, contentDescription = "Clear mark for ${row.student.name}")
+                                }
+                            } else {
+                                Spacer(Modifier.width(48.dp))
                             }
                         }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
             }
         }
 
-        Button(onClick = onSave, modifier = Modifier.fillMaxWidth()) {
-            Text("Save marks")
+        Button(
+            onClick = onSave,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isSaving && !state.isLoading && state.selectedAssessment != null &&
+                state.selectedSubject != null && state.studentRows.isNotEmpty(),
+        ) {
+            if (!state.isSaving) {
+                Icon(Icons.Filled.Done, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(if (state.isSaving) "Saving..." else "Save marks")
         }
     }
 

@@ -12,12 +12,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -117,7 +120,7 @@ private fun AssessmentListScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Assessments", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Back") }
+            BackIconButton(onClick = onBack)
         }
 
         Box {
@@ -147,6 +150,7 @@ private fun AssessmentListScreen(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Search assessments") },
             singleLine = true,
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

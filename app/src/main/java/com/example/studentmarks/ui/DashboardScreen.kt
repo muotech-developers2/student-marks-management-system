@@ -10,15 +10,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -45,6 +53,9 @@ fun DashboardScreen(
     activeAssessmentCount: Int,
     selectedTerm: TermEntity?,
     workSummary: DashboardWorkSummary?,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+    onAboutApp: () -> Unit,
     onShowClasses: () -> Unit,
     onEdit: () -> Unit,
     onOpenStudents: () -> Unit,
@@ -55,6 +66,7 @@ fun DashboardScreen(
     onTermSelected: (Int) -> Unit,
 ) {
     var termMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var profileMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isWide = maxWidth >= 680.dp
@@ -98,9 +110,46 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                             )
                         }
-                        Column(horizontalAlignment = Alignment.End) {
-                            TextButton(onClick = onShowClasses) { Text("Switch class") }
-                            TextButton(onClick = onEdit) { Text("Edit class") }
+                        Box {
+                            IconButton(
+                                onClick = { profileMenuExpanded = true },
+                                modifier = Modifier.size(48.dp),
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surface,
+                                ) {
+                                    Icon(
+                                        Icons.Filled.AccountCircle,
+                                        contentDescription = "Profile and app menu",
+                                        modifier = Modifier.size(44.dp),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = profileMenuExpanded,
+                                onDismissRequest = { profileMenuExpanded = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Switch class") },
+                                    onClick = { profileMenuExpanded = false; onShowClasses() },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Edit class") },
+                                    leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                                    onClick = { profileMenuExpanded = false; onEdit() },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(if (isDarkTheme) "Switch to light mode" else "Switch to dark mode") },
+                                    onClick = onToggleTheme,
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("About app") },
+                                    leadingIcon = { Icon(Icons.Filled.Info, contentDescription = null) },
+                                    onClick = { profileMenuExpanded = false; onAboutApp() },
+                                )
+                            }
                         }
                     }
                     Box {
@@ -160,6 +209,8 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                     shape = RoundedCornerShape(8.dp),
                 ) {
+                    Icon(Icons.Filled.Edit, contentDescription = null)
+                    Spacer(Modifier.size(8.dp))
                     Text("Enter marks", style = MaterialTheme.typography.titleMedium)
                 }
                 if (isWide) {

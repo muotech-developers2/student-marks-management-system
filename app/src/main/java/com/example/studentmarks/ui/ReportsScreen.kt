@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -58,7 +61,7 @@ fun ReportsScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Reports", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Back") }
+            BackIconButton(onClick = onBack)
         }
 
         if (state.profile != null) {
@@ -176,6 +179,7 @@ private fun StudentReportView(
                 onValueChange = onStudentSearchChanged,
                 label = { Text("Search student") },
                 modifier = Modifier.weight(1f),
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             )
             TextButton(onClick = onToggleInactiveStudents) {
                 Text(if (state.includeInactiveStudents) "Hide inactive" else "Include inactive")
@@ -236,6 +240,7 @@ private fun SubjectReportView(
                 onValueChange = onSubjectSearchChanged,
                 label = { Text("Search subject") },
                 modifier = Modifier.weight(1f),
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             )
             TextButton(onClick = onToggleInactiveSubjects) {
                 Text(if (state.includeInactiveSubjects) "Hide inactive" else "Include inactive")
